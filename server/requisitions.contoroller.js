@@ -1,6 +1,6 @@
 const Joi = require('joi');
 const datastore = require('./requisitions.datastore');
-const { createScheme } = require('./requisitions.schemes');
+const { createScheme, updateScheme } = require('./requisitions.schemes');
 
 exports.create = async function(req, res, next) {
   try {
@@ -29,10 +29,10 @@ exports.get = async function (req, res, next) {
     const data = await datastore
       .find({ _id: { $ne: '__autoinc__' } })
       .sort({ _id: 1 })
-      .skip(page === 1 ? 0 : ((page - 1) * perPage))
+      .skip((page - 1) * perPage)
       .limit(perPage);
 
-    res.status(200).json({ 
+    res.status(200).json({
       message: 'OK',
       pagination: { page, perPage, all },
       data
@@ -44,7 +44,8 @@ exports.get = async function (req, res, next) {
 
 exports.getById = async function (req, res, next) {
   try {
-    res.status(200).json({ message: 'OK' });
+    const data = await datastore.findOne({ _id: parseInt(req.params.id) });
+    res.status(200).json({ message: 'OK', data });
   } catch (error) {
     next(error)
   }
@@ -52,7 +53,17 @@ exports.getById = async function (req, res, next) {
 
 exports.update = async function (req, res, next) {
   try {
-    res.status(200).json({ message: 'Updated' });
+    const body = await updateScheme.validateAsync(req.body);
+    const data = await datastore.update(
+      { _id: parseInt(req.params.id)  }, 
+      { $set: body },
+      { returnUpdatedDocs: true }
+    );
+    if (!data) {
+      res.status(404).json({ message: 'Not Found' });
+    } else {
+      res.status(200).json({ message: 'Updated', data });
+    }
   } catch (error) {
     next(error)
   }
@@ -60,7 +71,13 @@ exports.update = async function (req, res, next) {
 
 exports.remove = async function (req, res, next) {
   try {
-    res.status(200).json({ message: 'Removed' });
+    const id = parseInt(req.params.id);
+    const numRemove = await datastore.remove({ _id: id });
+    if (numRemove === 0) {
+      res.status(404).json({ message: 'Not Found' });
+    } else {
+      res.status(200).json({ message: 'Removed', _id: id });
+    }
   } catch (error) {
     next(error)
   }
