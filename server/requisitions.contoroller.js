@@ -13,6 +13,7 @@ exports.create = async function(req, res, next) {
     });
     res.status(201).json({ message: 'Created', data });
   } catch (error) {
+    if (error.name === 'ValidationError') error.code = 400;
     next(error)
   }
 };
@@ -45,7 +46,11 @@ exports.get = async function (req, res, next) {
 exports.getById = async function (req, res, next) {
   try {
     const data = await datastore.findOne({ _id: parseInt(req.params.id) });
-    res.status(200).json({ message: 'OK', data });
+    if (!data) {
+      res.status(404).json({ message: 'Not Found' });
+    } else {
+      res.status(200).json({ message: 'OK', data });
+    }
   } catch (error) {
     next(error)
   }

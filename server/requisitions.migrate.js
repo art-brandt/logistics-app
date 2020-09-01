@@ -14,15 +14,15 @@ const requisition = {
 
 const mocks = new Array(50).fill(requisition);
 
-const promises = mocks.map((data) = (async() => {
-  const autoId = await datastore.getAutoId();
-  await datastore.insert({
-    _id: autoId,
-    ...data,
-    createdAt: new Date(Date.now()).toISOString()
-  });
-}));
+(async () => {
+  for (let data of mocks) {
+    const autoId = await datastore.getAutoId();
+    await datastore.insert({
+      _id: autoId,
+      ...data,
+      createdAt: new Date(Date.now()).toISOString()
+    });
+  }
+  console.log('migrate ok')
+})()
 
-Promise.all(promises)
-  .then(() => console.log('migrate ok'))
-  .catch((error) => comsole.error(error));
