@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "server:start": "cd ./server && npm start",
-    "server:migrate": "cd ./server && node requisitions.migrate.js",
+    "server:migrate": "cd ./server && npm run migrate",
     "server:install": "cd ./server && npm install",
     "client:install": "cd ./client && npm install",
     "client:build": "cd ./client && npm run build",

@@ -5,12 +5,14 @@ const requisitions = Datastore.create({
   autoload: true,
 });
 
-requisitions.find({ _id: '__autoinc__' })
-  .then((docs) => {
-    if (docs.length === 0) {
-      requisitions.insert({ _id: '__autoinc__', value: 0 });
-    }
-  });
+requisitions.setAutoincrementIdMode = async function setAutoincrementIdMode() {
+  const docs = await this.find({ _id: '__autoinc__' });
+  if (docs.length === 0) {
+    requisitions.insert({ _id: '__autoinc__', value: 0 });
+  }
+};
+
+requisitions.setAutoincrementIdMode();
 
 requisitions.getAutoId = async function getAutoId() {
   const { value } = await this.update(
