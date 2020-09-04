@@ -11,10 +11,9 @@ module.exports = {
         .string()
         .trim()
         .empty('')
-        // регулярка на страны СНГ
         .pattern(/^[+\d]{1,3}[+\d]{10}$/)
         .required(),
-      ati: Joi.number().integer().positive().required()
+      ati: Joi.number().integer().positive().required(),
     }),
     comments: Joi.string().empty('').trim(),
   }),
@@ -31,8 +30,8 @@ module.exports = {
         // регулярка на страны СНГ
         .pattern(/^[+\d]{1,3}[+\d]{10}$/)
         .required(),
-      ati: Joi.number().integer().positive()
+      ati: Joi.number().integer().positive(),
     }),
     comments: Joi.string().empty('').trim(),
   }),
-}
+};

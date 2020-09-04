@@ -11,5 +11,10 @@
     "morgan": "^1.10.0",
     "nedb-promises": "^4.0.4",
     "nodemon": "^2.0.4"
+  },
+  "devDependencies": {
+    "eslint": "^7.8.1",
+    "eslint-config-airbnb-base": "^14.2.0",
+    "eslint-plugin-import": "^2.22.0"
   }
 }

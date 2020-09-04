@@ -5,7 +5,7 @@ const requisitionsRouter = express.Router();
 
 requisitionsRouter.use(
   express.json({ extended: true }),
-  express.urlencoded({ extended: true })
+  express.urlencoded({ extended: true }),
 );
 
 requisitionsRouter.get('/', requisitionsController.get);

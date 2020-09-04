@@ -12,7 +12,7 @@ app.use(morgan('tiny'));
 app.use('/requisitions', requisitionsRouter);
 
 app.use((_req, res) => {
-  res.status(404).json({ message: 'Not Found' })
+  res.status(404).json({ message: 'Not Found' });
 });
 
 app.use((err, _req, res, next) => {
@@ -25,7 +25,7 @@ app.use((err, _req, res, next) => {
   }
 });
 
-app.listen(PORT, (err) => {
-  if (err) console.error(err);
-  console.log(`Server started at localhost:${PORT}`)
+app.listen(PORT, (error) => {
+  if (error) process.stdout.write(error.concat('\n'));
+  process.stdout.write(`Server started at localhost:${PORT}`.concat('\n'));
 });

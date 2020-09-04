@@ -10,19 +10,15 @@ requisitions.find({ _id: '__autoinc__' })
     if (docs.length === 0) {
       requisitions.insert({ _id: '__autoinc__', value: 0 });
     }
-  })
+  });
 
-requisitions.getAutoId = async function () {
-  try {
-    const { value } = await this.update(
-      { _id: '__autoinc__' },
-      { $inc: { value: 1 } },
-      { upsert: true, returnUpdatedDocs: true }
-    );
-    return value;
-  } catch (error) {
-    throw error;
-  }
+requisitions.getAutoId = async function getAutoId() {
+  const { value } = await this.update(
+    { _id: '__autoinc__' },
+    { $inc: { value: 1 } },
+    { upsert: true, returnUpdatedDocs: true },
+  );
+  return value;
 };
 
 module.exports = requisitions;
