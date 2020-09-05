@@ -11,7 +11,7 @@
       </tr>
     </thead>
     <tbody class="table__body">
-      <tr class="table__row" v-for="item in data" :key="item[dataKeyField]">
+      <tr class="table__row" v-for="item in data" :key="item['_id']">
         <td
           class="table__cell"
           v-for="(column, index) in columns"
@@ -19,16 +19,17 @@
           v-html="item[column.field]"
         ></td>
         <td class="table__cell table__actions-item">
-          <button
-            class="table__actions-item-btn button"
+          <app-button
+            class="table__actions-item-btn"
             type="button"
-            @click.prevent="$emit('update-item', item)"
-          >Изменить</button>
-          <button
-            class="table__actions-item-btn button button--danger"
+            @on-click="$emit('update-item', item['_id'])"
+          >Изменить</app-button>
+          <app-button
+            class="table__actions-item-btn"
             type="button"
-            @click.prevent="$emit('remove-item', item)"
-          >Удалить</button>
+            color="danger"
+            @on-click="$emit('remove-item', item['_id'])"
+          >Удалить</app-button>
         </td>
       </tr>
     </tbody>
@@ -36,8 +37,13 @@
 </template>
 
 <script>
+import AppButton from '@/components/appButton.vue';
+
 export default {
-  name: 'appTable',
+  name: 'AppTable',
+  components: {
+    AppButton,
+  },
   props: {
     columns: { type: Array, required: true },
     data: { type: Array, required: true },

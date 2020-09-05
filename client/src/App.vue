@@ -1,33 +1,77 @@
 <template>
   <div id="app" class="app">
-    <app-modal v-show="modalIsShow" :title="modalTitle">
-      <app-create-form
-        v-show="createFormIsShow"
-        ref="createForm"
-        @close-modal="hideModalCreate"
-        @on-submit="createNewRequisition"
-      />
-      <app-update-form
-        v-show="updateFormIsShow"
-        :requisition="updateForm"
-        :message="updateFormMessage"
-        @close-modal="hideModalUpdate"
-        @on-submit="updateRequisition"
-      />
+    <app-modal v-show="modalIs" :title="modalTitle">
+      <app-form :message="formMessage">
+        <app-input
+          name="clientName"
+          label="Название компани клиента"
+          :required="modalIs === 'create'"
+          v-model="form.clientName"
+        />
+        <app-input
+          name="firstName"
+          label="Имя перевозчика"
+          :required="modalIs === 'create'"
+          v-model="form.firstName"
+        />
+        <app-input
+          name="patronymic"
+          label="Отчество перевозчика"
+          :required="modalIs === 'create'"
+          v-model="form.patronymic"
+        />
+        <app-input
+          name="lastName"
+          label="Фамилия перевозчика"
+          :required="modalIs === 'create'"
+          v-model="form.lastName"
+        />
+        <app-input
+          name="phone"
+          label="Телефон перевозчика"
+          placeholder="Пример: +79092024343"
+          :required="modalIs === 'create'"
+          v-model="form.phone"
+        />
+        <app-input
+          name="ati"
+          label="ATI перевозчика"
+          :required="modalIs === 'create'"
+          v-model="form.ati"
+        />
+        <app-input
+          name="comments"
+          label="Комментарий"
+          type="textarea"
+          :required="false"
+          v-model="form.comments"
+        />
+        <template v-slot:button-group>
+          <app-button
+            type="button"
+            color="warning"
+            @on-click="hideModal"
+          >Отмена</app-button>
+          <app-button
+            type="submit"
+            :color="modalIs === 'create' ? 'success' : 'primary'"
+            @on-click="onSubmit"
+          >{{ modalIs === 'create' ? 'Создать' : 'Изменить' }}</app-button>
+        </template>
+      </app-form>
     </app-modal>
     <header class="header">
       <h1 class="header__title">Заявки</h1>
       <div class="header__rigth">
-        <button
-          class="header__rigth-item button button--secondary"
-          type="button"
-          @click.prevent="getRequisitions"
-        >Обновить</button>
-        <button
-          class="header__rigth-item button button--success"
-          type="button"
-          @click.prevent="showModalCreate"
-        >Новая</button>
+        <app-button
+          class="header__rigth-item"
+          color="secondary"
+          @on-click="getRequisitions"
+        >Обновить</app-button>
+        <app-button
+          class="header__rigth-item"
+          @on-click="showModalCreate"
+        >Новая</app-button>
       </div>
     </header>
     <main v-show="loaded" class="content">
@@ -39,9 +83,6 @@
         @update-item="showModalUpdate"
         @remove-item="removeRequisition"
       />
-      <div class="content__bottom">
-
-      </div>
     </main>
     <footer class="footer">
       <app-pagination
@@ -64,54 +105,64 @@
 import Joi from 'joi/dist/joi-browser.min';
 import api from '@/api';
 import AppTable from '@/components/appTable.vue';
-import AppCreateForm from '@/components/appCreateForm.vue';
-import AppUpdateForm from '@/components/appUpdateForm.vue';
 import AppPagination from '@/components/appPagination.vue';
 import AppModal from '@/components/appModal.vue';
+import AppForm from '@/components/appForm.vue';
+import AppInput from '@/components/appInput.vue';
+import AppButton from '@/components/appButton.vue';
+
+const createScheme = Joi.object({
+  clientName: Joi.string().trim().empty('').required()
+    .error(new Error('Название компани клиента обязательное поле.')),
+  firstName: Joi.string().trim().empty('').required()
+    .error(new Error('Имя перевозчика клиента обязательное поле.')),
+  lastName: Joi.string().trim().empty('').required()
+    .error(new Error('Фамилия перевозчика клиента обязательное поле.')),
+  patronymic: Joi.string().trim().empty('').required()
+    .error(new Error('Отчество перевозчика клиента обязательное поле..')),
+  phone: Joi.string().trim()
+    .pattern(/^[+\d]{1,3}[+\d]{10}$/)
+    .required()
+    .error(new Error([
+      'Телефон перевозчика клиента обязательное поле.',
+      'Формат телефона должен быть +79092024343.',
+    ].join(' '))),
+  ati: Joi.number().integer().positive().required()
+    .error(new Error('ATI перевозчика обязательное поле.')),
+  comments: Joi.string().empty('').trim(),
+});
 
 const updateScheme = Joi.object({
   clientName: Joi.string().trim().empty(''),
-  firstName: Joi.string().empty('').trim(),
-  lastName: Joi.string().empty('').trim(),
-  patronymic: Joi.string().empty('').trim(),
-  phone: Joi
-    .string()
-    .trim()
+  firstName: Joi.string().trim().empty(''),
+  lastName: Joi.string().trim().empty(''),
+  patronymic: Joi.string().trim().empty(''),
+  phone: Joi.string().trim()
     .pattern(/^[+\d]{1,3}[+\d]{10}$/)
+    .required()
     .error(new Error('Формат телефона должен быть +79092024343.')),
   ati: Joi.number().integer().positive(),
   comments: Joi.string().empty('').trim(),
 });
 
-const defaultUpdateForm = {
-  clientName: '',
-  firstName: '',
-  lastName: '',
-  patronymic: '',
-  phone: '',
-  ati: '',
-  comments: '',
-};
-
 export default {
   name: 'App',
   components: {
     AppTable,
-    AppCreateForm,
     AppPagination,
     AppModal,
-    AppUpdateForm,
+    AppForm,
+    AppInput,
+    AppButton,
   },
   data: () => ({
+    requisitions: [],
     loaded: false,
     currentPage: 1,
     perPage: 15,
     requisitionsAll: 0,
-    createFormIsShow: false,
-    updateFormIsShow: false,
-    modalTitle: '',
-    modalIsShow: false,
-    updateFormMessage: '',
+    modalIs: null,
+    formMessage: '',
     columns: [
       { title: '№', field: '_id' },
       { title: 'Дата', field: 'createdAt' },
@@ -121,8 +172,16 @@ export default {
       { title: 'Перевозчик ATI', field: 'ati' },
       { title: 'Комментарий', field: 'comments' },
     ],
-    requisitions: [],
-    updateForm: { ...defaultUpdateForm },
+    form: {
+      clientName: '',
+      firstName: '',
+      patronymic: '',
+      lastName: '',
+      phone: '',
+      ati: '',
+      comments: '',
+    },
+    updateId: null,
   }),
   computed: {
     quanityPage() {
@@ -149,42 +208,46 @@ export default {
       });
       return requisitions;
     },
+    modalIsShow() {
+      return (this.modalIs === 'create') || (this.modalIs === 'update');
+    },
+    modalTitle() {
+      let modalTitle = '';
+      if (this.modalIs === 'create') {
+        modalTitle = 'Новая Заявка';
+      } else if (this.modalIs === 'update') {
+        modalTitle = 'Изменение Заявки';
+      }
+      return modalTitle;
+    },
   },
   methods: {
+    hideModal() {
+      this.modalIs = null;
+    },
     showModalCreate() {
-      this.modalTitle = 'Новая Заявка';
-      this.createFormIsShow = true;
-      this.updateFormIsShow = false;
-      this.modalIsShow = true;
+      this.modalIs = 'create';
     },
-    hideModalCreate() {
-      this.createFormIsShow = false;
-      this.modalIsShow = false;
-    },
-    showModalUpdate(requisition) {
-      this.modalTitle = 'Изменение Заявки';
+    showModalUpdate(id) {
       /* eslint-disable no-underscore-dangle */
-      const [candidate] = this.requisitions
-        .filter((item) => item._id === requisition._id);
-      this.updateForm = {
-        id: candidate._id,
-        clientName: candidate.clientName,
-        firstName: candidate.carrier.firstName,
-        lastName: candidate.carrier.lastName,
-        patronymic: candidate.carrier.patronymic,
-        phone: candidate.carrier.phone,
-        ati: candidate.carrier.ati,
-        comments: candidate.comments,
-      };
-      this.createFormIsShow = false;
-      this.updateFormIsShow = true;
-      this.modalIsShow = true;
+      this.modalIs = 'update';
+      this.updateId = id;
+      const [requisition] = this.requisitions
+        .filter((item) => item._id === this.updateId);
+      this.form.clientName = requisition.clientName;
+      this.form.firstName = requisition.carrier.firstName;
+      this.form.patronymic = requisition.carrier.patronymic;
+      this.form.lastName = requisition.carrier.lastName;
+      this.form.phone = requisition.carrier.phone;
+      this.form.ati = requisition.carrier.ati.toString();
+      this.form.comments = requisition.comments;
     },
-    hideModalUpdate() {
-      this.updateFormIsShow = false;
-      this.modalIsShow = false;
-      this.updateFormMessage = '';
-      this.updateForm = { ...defaultUpdateForm };
+    onSubmit() {
+      if (this.modalIs === 'create') {
+        this.createRequisition();
+      } else if (this.modalIs === 'update') {
+        this.updateRequisition();
+      }
     },
     async getRequisitions() {
       this.loaded = false;
@@ -194,37 +257,12 @@ export default {
       this.loaded = true;
       return data;
     },
-    async createNewRequisition(requisition) {
-      const data = {
-        clientName: requisition.clientName,
-        carrier: {
-          firstName: requisition.firstName,
-          lastName: requisition.lastName,
-          patronymic: requisition.patronymic,
-          phone: requisition.phone,
-          ati: parseInt(requisition.ati, 10),
-        },
-        comments: requisition.comments,
-      };
-      await api.createRequisition(data);
-      this.hideModalCreate();
-      this.$refs.createForm.reset();
-      this.requisitions = await this.getRequisitions();
-    },
-    async removeRequisition(requisition) {
-      /* eslint-disable no-underscore-dangle */
-      await api.removeRequisition(requisition._id);
-      this.requisitions = await this.getRequisitions();
-    },
-    async updateRequisition() {
-      let data = { ...this.updateForm };
-      const { id } = this.updateForm;
-      delete data.id;
-      const { value, error } = updateScheme.validate(data);
+    async createRequisition() {
+      const { value, error } = createScheme.validate(this.form);
       if (error) {
-        this.updateFormMessage = error;
+        this.formMessage = error.message;
       } else {
-        data = {
+        const requisition = {
           clientName: value.clientName,
           carrier: {
             firstName: value.firstName,
@@ -235,9 +273,35 @@ export default {
           },
           comments: value.comments,
         };
-        await api.updateRequisition(id, data);
+        await api.createRequisition(requisition);
+        this.hideModal();
         this.requisitions = await this.getRequisitions();
-        this.hideModalUpdate();
+      }
+    },
+    async removeRequisition(id) {
+      /* eslint-disable no-underscore-dangle */
+      await api.removeRequisition(id);
+      this.requisitions = await this.getRequisitions();
+    },
+    async updateRequisition() {
+      const { value, error } = updateScheme.validate(this.form);
+      if (error) {
+        this.formMessage = error.message;
+      } else {
+        const requisition = {
+          clientName: value.clientName,
+          carrier: {
+            firstName: value.firstName,
+            lastName: value.lastName,
+            patronymic: value.patronymic,
+            phone: value.phone,
+            ati: value.ati,
+          },
+          comments: value.comments,
+        };
+        await api.updateRequisition(this.updateId, requisition);
+        this.hideModal();
+        this.requisitions = await this.getRequisitions();
       }
     },
     async toFirstPage() {
@@ -351,29 +415,5 @@ body {
 
 .header__rigth-item {
   margin-left: 10px;
-}
-
-.button {
-  border: none;
-  border-radius: 2px;
-  background-color: var(--bg-primary-color);
-  width: 80px;
-  height: 30px;
-}
-
-.button--success {
-  background-color: var(--bg-success-color);
-}
-
-.button--danger {
-  background-color: var(--bg-danger-color);
-}
-
-.button--secondary {
-  background-color: var(--bg-secondary-color);
-}
-
-.button--warning {
-  background-color: var(--bg-warning-color);
 }
 </style>
