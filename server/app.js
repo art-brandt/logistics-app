@@ -27,5 +27,5 @@ app.use((err, _req, res, next) => {
 
 app.listen(PORT, (error) => {
   if (error) process.stdout.write(error.concat('\n'));
-  process.stdout.write(`Server started at localhost:${PORT}`.concat('\n'));
+  process.stdout.write(`Server started at localhost:${PORT}\n`);
 });
