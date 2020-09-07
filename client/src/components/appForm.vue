@@ -23,7 +23,7 @@ export default {
   flex-direction: column;
 }
 
-.form div {
+.form > div {
   margin-bottom: 10px;
 }
 
