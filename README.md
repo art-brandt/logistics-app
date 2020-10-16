@@ -230,7 +230,7 @@
 ```json
 // тело ответа
 {
-    "message": "carrier.ati" must be a number"
+    "message": "carrier.ati must be a number"
 }
 ```
 
